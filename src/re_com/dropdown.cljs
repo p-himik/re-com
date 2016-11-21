@@ -168,7 +168,7 @@
             text (if @internal-model
                    (label-fn (item-for-id @internal-model choices :id-fn id-fn))
                    placeholder)]
-        [:a.chosen-single.chosen-default
+        [:a.chosen-single.chosen-default.form-control
          {:href          "javascript:"   ;; Required to make this anchor appear in the tab order
           :tab-index     (when tab-index tab-index)
           :on-click      (handler-fn
