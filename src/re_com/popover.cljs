@@ -455,6 +455,11 @@
 ;; Component: popover-tooltip
 ;;--------------------------------------------------------------------------------------------------
 
+(def popover-tooltip-colors (reagent/atom {:warning "#f57c00"
+                                           :error   "#d50000"
+                                           :info    "#333333"
+                                           :success "#13C200"}))
+
 (def popover-tooltip-args-desc
   [{:name :label         :required true                         :type "string | hiccup | atom" :validate-fn string-or-hiccup?    :description "the text (or component) for the tooltip"}
    {:name :showing?      :required true                         :type "boolean atom"                                             :description "an atom. When the value is true, the tooltip shows"}
@@ -474,12 +479,7 @@
       :as args}]
   {:pre [(validate-args-macro popover-tooltip-args-desc args "popover-tooltip")]}
   (let [label         (deref-or-value label)
-        popover-color (case status
-                        :warning "#f57c00"
-                        :error   "#d50000"
-                        :info    "#333333"
-                        :success "#13C200"
-                        "black")]
+        popover-color (get @popover-tooltip-colors status "black")]
     [popover-anchor-wrapper
      :showing? showing?
      :position (or position :below-center)

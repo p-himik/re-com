@@ -1105,12 +1105,14 @@ code {
 
 .rc-icon-smaller {
     height:      16px;
+    width:       16px;
     font-size:   16px;
     line-height: 16px;
 }
 
 .rc-icon-larger {
     height:      32px;
+    width:       32px;
     font-size:   32px;
     line-height: 32px;
 }

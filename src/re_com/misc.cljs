@@ -5,7 +5,9 @@
             [re-com.box      :refer [h-box v-box box gap line flex-child-style align-style]]
             [re-com.validate :refer [input-status-type? input-status-types-list regex?
                                      string-or-hiccup? css-style? html-attr? number-or-string?
-                                     string-or-atom? throbber-size? throbber-sizes-list] :refer-macros [validate-args-macro]]
+                                     string-or-atom? throbber-size? throbber-sizes-list
+                                     button-size? button-sizes-list position? position-options-list]
+                             :refer-macros [validate-args-macro]]
             [reagent.core    :as    reagent]))
 
 ;; ------------------------------------------------------------------------------------
@@ -44,23 +46,30 @@
 ;;  Component: input-text
 ;; ------------------------------------------------------------------------------------
 
+(def input-status-icons (reagent/atom {:success "zmdi-check-circle"
+                                       :warning "zmdi-alert-triangle"
+                                       :error "zmdi-alert-circle"
+                                       :validating "zmdi-hc-spin zmdi-rotate-right zmdi-spinner"}))
+
 (def input-text-args-desc
-  [{:name :model            :required true                   :type "string | atom"    :validate-fn string-or-atom?    :description "text of the input (can be atom or value)"}
-   {:name :on-change        :required true                   :type "string -> nil"    :validate-fn fn?                :description [:span [:code ":change-on-blur?"] " controls when it is called. Passed the current input string"] }
-   {:name :status           :required false                  :type "keyword"          :validate-fn input-status-type? :description [:span "validation status. " [:code "nil/omitted"] " for normal status or one of: " input-status-types-list]}
-   {:name :status-icon?     :required false :default false   :type "boolean"                                          :description [:span "when true, display an icon to match " [:code ":status"] " (no icon for nil)"]}
-   {:name :status-tooltip   :required false                  :type "string"           :validate-fn string?            :description "displayed in status icon's tooltip"}
-   {:name :placeholder      :required false                  :type "string"           :validate-fn string?            :description "background text shown when empty"}
-   {:name :width            :required false :default "250px" :type "string"           :validate-fn string?            :description "standard CSS width setting for this input"}
-   {:name :height           :required false                  :type "string"           :validate-fn string?            :description "standard CSS height setting for this input"}
-   {:name :rows             :required false :default 3       :type "integer | string" :validate-fn number-or-string?  :description "ONLY applies to 'input-textarea': the number of rows of text to show"}
-   {:name :change-on-blur?  :required false :default true    :type "boolean | atom"                                   :description [:span "when true, invoke " [:code ":on-change"] " function on blur, otherwise on every change (character by character)"] }
-   {:name :validation-regex :required false                  :type "regex"            :validate-fn regex?             :description "user input is only accepted if it would result in a string that matches this regular expression"}
-   {:name :disabled?        :required false :default false   :type "boolean | atom"                                   :description "if true, the user can't interact (input anything)"}
-   {:name :class            :required false                  :type "string"           :validate-fn string?            :description "CSS class names, space separated"}
-   {:name :style            :required false                  :type "CSS style map"    :validate-fn css-style?         :description "CSS styles to add or override"}
-   {:name :attr             :required false                  :type "HTML attr map"    :validate-fn html-attr?         :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}
-   {:name :input-type       :required false                  :type "keyword"          :validate-fn keyword?           :description "ONLY applies to super function 'base-input-text': either :input or :textarea"}])
+  [{:name :model                   :required true                         :type "string | atom"    :validate-fn string-or-atom?    :description "text of the input (can be atom or value)"}
+   {:name :on-change               :required true                         :type "string -> nil"    :validate-fn fn?                :description [:span [:code ":change-on-blur?"] " controls when it is called. Passed the current input string"] }
+   {:name :status                  :required false                        :type "keyword"          :validate-fn input-status-type? :description [:span "validation status. " [:code "nil/omitted"] " for normal status or one of: " input-status-types-list]}
+   {:name :status-icon?            :required false :default false         :type "boolean"                                          :description [:span "when true, display an icon to match " [:code ":status"] " (no icon for nil)"]}
+   {:name :status-icon-size        :required false :default :regular      :type "keyword"          :validate-fn button-size?       :description [:span "one of " button-sizes-list]}
+   {:name :status-tooltip          :required false                        :type "string"           :validate-fn string?            :description "displayed in status icon's tooltip"}
+   {:name :status-tooltip-position :required false :default :right-center :type "keyword"          :validate-fn position?          :description [:span "relative to the status icon. One of " position-options-list]}
+   {:name :placeholder             :required false                        :type "string"           :validate-fn string?            :description "background text shown when empty"}
+   {:name :width                   :required false :default "250px"       :type "string"           :validate-fn string?            :description "standard CSS width setting for this input"}
+   {:name :height                  :required false                        :type "string"           :validate-fn string?            :description "standard CSS height setting for this input"}
+   {:name :rows                    :required false :default 3             :type "integer | string" :validate-fn number-or-string?  :description "ONLY applies to 'input-textarea': the number of rows of text to show"}
+   {:name :change-on-blur?         :required false :default true          :type "boolean | atom"                                   :description [:span "when true, invoke " [:code ":on-change"] " function on blur, otherwise on every change (character by character)"] }
+   {:name :validation-regex        :required false                        :type "regex"            :validate-fn regex?             :description "user input is only accepted if it would result in a string that matches this regular expression"}
+   {:name :disabled?               :required false :default false         :type "boolean | atom"                                   :description "if true, the user can't interact (input anything)"}
+   {:name :class                   :required false                        :type "string"           :validate-fn string?            :description "CSS class names, space separated"}
+   {:name :style                   :required false                        :type "CSS style map"    :validate-fn css-style?         :description "CSS styles to add or override"}
+   {:name :attr                    :required false                        :type "HTML attr map"    :validate-fn html-attr?         :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}
+   {:name :input-type              :required false                        :type "keyword"          :validate-fn keyword?           :description "ONLY applies to super function 'base-input-text': either :input or :textarea"}])
 
 ;; Sample regex's:
 ;;  - #"^(-{0,1})(\d*)$"                   ;; Signed integer
@@ -76,8 +85,9 @@
   (let [external-model (reagent/atom (deref-or-value model))  ;; Holds the last known external value of model, to detect external model changes
         internal-model (reagent/atom (if (nil? @external-model) "" @external-model))] ;; Create a new atom from the model to be used internally (avoid nil)
     (fn
-      [& {:keys [model status status-icon? status-tooltip placeholder width height rows on-change change-on-blur? validation-regex disabled? class style attr]
-          :or   {change-on-blur? true}
+      [& {:keys [model status status-icon? status-icon-size status-tooltip status-tooltip-position
+                 placeholder width height rows on-change change-on-blur? validation-regex disabled? class style attr]
+          :or   {status-icon-size :regular status-tooltip-position :right-center change-on-blur? true}
           :as   args}]
       {:pre [(validate-args-macro input-text-args-desc args "input-text")]}
       (let [latest-ext-model (deref-or-value model)
@@ -88,7 +98,7 @@
           (reset! external-model latest-ext-model)
           (reset! internal-model latest-ext-model))
         [h-box
-         :align    :start
+         :align    :center
          :width    (if width width "250px")
          :class    "rc-input-text "
          :children [[:div
@@ -138,18 +148,23 @@
 
                          }
                         attr)]]
-                    (when (and status-icon? status)
-                      (let [icon-class (case status :success "zmdi-check-circle" :warning "zmdi-alert-triangle" :error "zmdi-alert-circle zmdi-spinner" :validating "zmdi-hc-spin zmdi-rotate-right zmdi-spinner")]
+                    (when status-icon?
+                      (let [throbber-size (if (= status-icon-size :larger) :large status-icon-size)
+                            icon-class (str (get @input-status-icons status) " "
+                                            (case status-icon-size
+                                              :smaller "rc-icon-smaller "
+                                              :larger "rc-icon-larger "
+                                              nil))]
                         (if status-tooltip
                          [popover-tooltip
                           :label status-tooltip
-                          :position :right-center
+                          :position status-tooltip-position
                           :status status
                           ;:width    "200px"
                           :showing? showing?
                           :anchor (if (= :validating status)
                                     [throbber
-                                     :size  :regular
+                                     :size  throbber-size
                                      :class "smaller"
                                      :attr  {:on-mouse-over (handler-fn (when (and status-icon? status) (reset! showing? true)))
                                              :on-mouse-out  (handler-fn (reset! showing? false))}]
@@ -164,7 +179,7 @@
                                         {:font-size   "130%"
                                          :margin-left "4px"})]
                          (if (= :validating status)
-                           [throbber :size :regular :class "smaller"]
+                           [throbber :size throbber-size :class "smaller"]
                            [:i {:class (str "zmdi zmdi-hc-fw " icon-class " form-control-feedback")
                                 :style (merge (flex-child-style "none")
                                               (align-style :align-self :center)
