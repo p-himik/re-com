@@ -263,11 +263,12 @@
    {:name :disabled?   :required false :default false :type "boolean | atom"                                   :description "if true, the user can't click the radio button"}
    {:name :style       :required false                :type "CSS style map"     :validate-fn css-style?        :description "radio button style map"}
    {:name :label-style :required false                :type "CSS style map"     :validate-fn css-style?        :description "the CSS class applied overall to the component"}
-   {:name :label-class :required false                :type "string"            :validate-fn string?           :description "the CSS class applied to the label"}])
+   {:name :label-class :required false                :type "string"            :validate-fn string?           :description "the CSS class applied to the label"}
+   {:name :attr        :required false                :type "HTML attr map"     :validate-fn html-attr?        :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}])
 
 (defn radio-button
   "I return the markup for a radio button, with an optional RHS label"
-  [& {:keys [model on-change value label disabled? style label-class label-style]
+  [& {:keys [model on-change value label disabled? style label-class label-style attr]
       :as   args}]
   {:pre [(validate-args-macro radio-button-args-desc args "radio-button")]}
   (let [cursor      "default"
@@ -279,15 +280,17 @@
      :align    :start
      :class    "noselect"
      :children [[:input
-                 {:class     "rc-radio-button"
-                  :type      "radio"
-                  :style     (merge
-                               (flex-child-style "none")
-                               {:cursor cursor}
-                               style)
-                  :disabled  disabled?
-                  :checked   (= model value)
-                  :on-change (handler-fn (callback-fn))}]
+                 (merge
+                   {:class     "rc-radio-button"
+                    :type      "radio"
+                    :style     (merge
+                                 (flex-child-style "none")
+                                 {:cursor cursor}
+                                 style)
+                    :disabled  disabled?
+                    :checked   (= model value)
+                    :on-change (handler-fn (callback-fn))}
+                   attr)]
                 (when label
                   [:span
                    {:on-click (handler-fn (callback-fn))
@@ -356,16 +359,17 @@
 ;; ------------------------------------------------------------------------------------
 
 (def progress-bar-args-desc
-  [{:name :model    :required true  :type "double | string | atom"                 :validate-fn number-or-string? :description "current value of the slider. A number between 0 and 100"}
-   {:name :width    :required false :type "string"                 :default "100%" :validate-fn string?           :description "a CSS width"}
-   {:name :striped? :required false :type "boolean"                :default false                                 :description "when true, the progress section is a set of animated stripes"}
-   {:name :class    :required false :type "string"                                 :validate-fn string?           :description "CSS class names, space separated"}
-   {:name :style    :required false :type "CSS style map"                          :validate-fn css-style?        :description "CSS styles to add or override"}
-   {:name :attr     :required false :type "HTML attr map"                          :validate-fn html-attr?        :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}])
+  [{:name :model     :required true  :type "double | string | atom"                 :validate-fn number-or-string? :description "current value of the slider. A number between 0 and 100"}
+   {:name :width     :required false :type "string"                 :default "100%" :validate-fn string?           :description "a CSS width"}
+   {:name :striped?  :required false :type "boolean"                :default false                                 :description "when true, the progress section is a set of animated stripes"}
+   {:name :class     :required false :type "string"                                 :validate-fn string?           :description "CSS class names, space separated"}
+   {:name :bar-class :required false :type "string"                                 :validate-fn string?           :description "CSS class name(s) for the actual progress bar itself, space separated"}
+   {:name :style     :required false :type "CSS style map"                          :validate-fn css-style?        :description "CSS styles to add or override"}
+   {:name :attr      :required false :type "HTML attr map"                          :validate-fn html-attr?        :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}])
 
 (defn progress-bar
   "Render a bootstrap styled progress bar"
-  [& {:keys [model width striped? class style attr]
+  [& {:keys [model width striped? class bar-class style attr]
       :or   {width "100%"}
       :as   args}]
   {:pre [(validate-args-macro progress-bar-args-desc args "progress-bar")]}
@@ -380,7 +384,7 @@
                               style)}
                attr)
              [:div
-              {:class (str "progress-bar " (when striped? "progress-bar-striped active"))
+              {:class (str "progress-bar " (when striped? "progress-bar-striped active ") bar-class)
                :role  "progressbar"
                :style {:width      (str model "%")
                        :transition "none"}}                 ;; Default BS transitions cause the progress bar to lag behind

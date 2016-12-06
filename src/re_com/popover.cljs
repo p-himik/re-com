@@ -349,20 +349,26 @@
       :or {arrow-length 11 arrow-width 22 arrow-gap -1}
       :as args}]
   {:pre [(validate-args-macro popover-content-wrapper-args-desc args "popover-content-wrapper")]}
-  ;(assert ((complement nil?) showing-injected?) "Must specify a showing-injected? atom")
-  (let [left-offset (reagent/atom 0)
-        top-offset  (reagent/atom 0)]
+  (let [left-offset              (reagent/atom 0)
+        top-offset               (reagent/atom 0)
+        position-no-clip-popover (fn position-no-clip-popover
+                                   [this]
+                                   (when no-clip?
+                                     (let [node               (reagent/dom-node this)
+                                           popover-point-node (.-parentNode node)                           ;; Get reference to rc-popover-point node
+                                           bounding-rect      (.getBoundingClientRect popover-point-node)]  ;; The modern magical way of getting offsetLeft and offsetTop. Returns this: https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/nsIDOMClientRect
+                                       (reset! left-offset (.-left bounding-rect))
+                                       (reset! top-offset  (.-top  bounding-rect)))))]
     (reagent/create-class
       {:display-name "popover-content-wrapper"
 
        :component-did-mount
        (fn [this]
-         (when no-clip?
-           (let [node               (reagent/dom-node this)
-                 popover-point-node (.-parentNode node)                           ;; Get reference to rc-popover-point node
-                 bounding-rect      (.getBoundingClientRect popover-point-node)]  ;; The modern magical way of getting offsetLeft and offsetTop. Returns this: https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/nsIDOMClientRect
-             (reset! left-offset (.-left bounding-rect))
-             (reset! top-offset  (.-top  bounding-rect)))))
+         (position-no-clip-popover this))
+
+       :component-did-update
+       (fn [this]
+         (position-no-clip-popover this))
 
        :reagent-render
        (fn
@@ -370,6 +376,8 @@
              :or {arrow-length 11 arrow-width 22 arrow-gap -1}
              :as args}]
          {:pre [(validate-args-macro popover-content-wrapper-args-desc args "popover-content-wrapper")]}
+
+         @position-injected ;; Dereference this atom. Although nothing here needs its value explicitly, the calculation of left-offset and top-offset are affected by it for :no-clip? true
          [:div
           {:class "popover-content-wrapper"
            :style (merge (flex-child-style "inherit")
@@ -425,7 +433,8 @@
        (fn
          [& {:keys [showing? position anchor popover style] :as args}]
          {:pre [(validate-args-macro popover-anchor-wrapper-args-desc args "popover-anchor-wrapper")]}
-         @reset-on-hide ;; TODO: Need to dereference this reaction, otherwise it will never update (probably a better way to do this)
+
+         @reset-on-hide ;; Dereference this reaction, otherwise it won't be set up. The reaction is set to run whenever the popover closes
          (when (not= @external-position position) ;; Has position changed externally?
            (reset! external-position position)
            (reset! internal-position @external-position))
