@@ -39,19 +39,19 @@
   [{:as args :keys [on-change rigid? change-on-blur? data-source suggestion-to-string debounce-delay model]}]
   (let [external-model-value (deref-or-value model)]
     (cond-> (let [c-input (chan)]
-              {:input-text ""
-               :external-model (deref-or-value model)
-               :model          (deref-or-value model)
-               :waiting? false
-               :suggestions []
+              {:input-text             ""
+               :external-model         model
+               :model                  (deref-or-value model)
+               :waiting?               false
+               :suggestions            []
                :displaying-suggestion? false
-               :suggestion-to-string (or suggestion-to-string str)
-               :data-source data-source
-               :change-on-blur? change-on-blur?
-               :on-change  on-change
-               :rigid?     rigid?
-               :c-input    c-input
-               :c-search   (debounce c-input debounce-delay)})
+               :suggestion-to-string   (or suggestion-to-string str)
+               :data-source            data-source
+               :change-on-blur?        change-on-blur?
+               :on-change              on-change
+               :rigid?                 rigid?
+               :c-input                c-input
+               :c-search               (debounce c-input debounce-delay)})
       external-model-value
       (display-suggestion external-model-value))))
 
@@ -251,7 +251,7 @@
             width (or width "250px")]
         (when (not= last-data-source data-source)
           (swap! state-atom change-data-source data-source))
-        (when (not= latest-external-model external-model)
+        (when (not= latest-external-model (deref-or-value external-model))
           (swap! state-atom external-model-changed latest-external-model))
         [v-box
          :width width
@@ -260,11 +260,11 @@
          [(into [input-text
                  :model input-text-model
                  :on-change (partial input-text-on-change! state-atom)
-                 ;:change-on-blur? false
+                 :change-on-blur? false
                  :attr (merge {:on-key-down (partial input-text-on-key-down! state-atom)}
                               (:attr args))]
                 (apply concat (dissoc (select-keys args (map :name input-text-args-desc))
-                                      :model :on-change :attr)))
+                                      :model :on-change :attr :change-on-blur?)))
           (if (or (not-empty suggestions) waiting?)
             [backdrop
              :on-click #(swap! state-atom clear-suggestions)])
