@@ -9,6 +9,7 @@
             [re-com.validate :refer [input-status-type? input-status-types-list regex?
                                      string-or-hiccup? css-style? html-attr? number-or-string?
                                      string-or-atom? throbber-size? throbber-sizes-list] :refer-macros [validate-args-macro]]
+            [re-com.backdrop :refer [backdrop]]
             [reagent.core    :as    reagent]
             [goog.events.KeyCodes]))
 
@@ -264,6 +265,9 @@
                               (:attr args))]
                 (apply concat (dissoc (select-keys args (map :name input-text-args-desc))
                                       :model :on-change :attr)))
+          (if (or (not-empty suggestions) waiting?)
+            [backdrop
+             :on-click #(swap! state-atom clear-suggestions)])
           (if (or (not-empty suggestions) waiting?)
             [v-box
              :class "rc-typeahead-suggestions-container"
