@@ -1330,6 +1330,8 @@ code {
 
 .rc-typeahead-suggestions-container {
     background-color: #eee;
+    position: absolute;
+    z-index: 1000;
 }
 
 .rc-typeahead-suggestion {
