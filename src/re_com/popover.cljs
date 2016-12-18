@@ -4,6 +4,7 @@
             [re-com.box      :refer [h-box v-box flex-child-style flex-flow-style align-style]]
             [re-com.validate :refer [position? position-options-list popover-status-type? popover-status-types-list number-or-string?
                                      string-or-hiccup? string-or-atom? vector-of-maps? css-style? html-attr?] :refer-macros [validate-args-macro]]
+            [re-com.backdrop :refer [backdrop]]
             [clojure.string  :as    string]
             [reagent.core    :as    reagent]
             [reagent.ratom   :refer-macros [reaction]]))
@@ -136,29 +137,6 @@
                                  (if grey-arrow? "#f7f7f7" "white"))
                          :stroke (when-not no-border? "rgba(0, 0, 0, .2)")
                          :stroke-width "1"}}]]))
-
-
-;;--------------------------------------------------------------------------------------------------
-;; Component: backdrop
-;;--------------------------------------------------------------------------------------------------
-
-(def backdrop-args-desc
-  [{:name :opacity  :required false :default 0.0 :type "double | string" :validate-fn number-or-string? :description [:span "opacity of backdrop from:" [:br] "0.0 (transparent) to 1.0 (opaque)"]}
-   {:name :on-click :required false              :type "-> nil"          :validate-fn fn?               :description "a function which takes no params and returns nothing. Called when the backdrop is clicked"}])
-
-(defn- backdrop
-  "Renders a backdrop dive which fills the entire page and responds to clicks on it. Can also specify how tranparent it should be"
-  [& {:keys [opacity on-click] :as args}]
-  {:pre [(validate-args-macro backdrop-args-desc args "backdrop")]}
-  [:div {:class     "rc-backdrop noselect"
-         :style    {:position         "fixed"
-                    :left             "0px"
-                    :top              "0px"
-                    :width            "100%"
-                    :height           "100%"
-                    :background-color "black"
-                    :opacity          (if opacity opacity 0.0)}
-         :on-click (handler-fn (on-click))}])
 
 
 ;;--------------------------------------------------------------------------------------------------
