@@ -1,4 +1,5 @@
 (ns re-com.typeahead
+  (:import goog.events.KeyCodes)
   (:require-macros [re-com.core :refer [handler-fn]]
                    [cljs.core.async.macros :refer [alt! go-loop]])
   (:require [cljs.core.async :refer [chan timeout <! put!]]
@@ -10,8 +11,7 @@
                                      string-or-hiccup? css-style? html-attr? number-or-string?
                                      string-or-atom? throbber-size? throbber-sizes-list] :refer-macros [validate-args-macro]]
             [re-com.backdrop :refer [backdrop]]
-            [reagent.core    :as    reagent]
-            [goog.events.KeyCodes]))
+            [reagent.core    :as    reagent]))
 
 ;; ------------------------------------------------------------------------------------
 ;;  Component: typeahead
@@ -19,14 +19,14 @@
 
 (def typeahead-args-desc
   (conj input-text-args-desc
-   {:name :data-source       :required true                   :type "fn"               :validate-fn fn?                :description [:span [:code ":data-source"] " supplies suggestion objects. This can either accept a single string argument (the search term), or a string and a callback. For the first case, the fn should return a collection of suggestion objects (which can be anything). For the second case, the fn should return "[:code "nil" ]", and eventually result in a call to the callback with a collection of suggestion objects."]}
-   {:name :on-change         :required false :default nil     :type "string -> nil"    :validate-fn fn?                :description [:span [:code ":change-on-blur?"] " controls when it is called. It is passed a suggestion object."] }
-   {:name :change-on-blur?   :required false :default true    :type "boolean | atom"                                   :description [:span "when true, invoke " [:code ":on-change"] " when the use chooses a suggestion, otherwise invoke it on every change (navigating through suggestions with the mouse or keyboard, or if "[:code "rigid?"]" is also "[:code "false" ]", invoke it on every character typed.)"] }
-   {:name :model             :required false :default nil     :type "object | atom"                                    :description "The initial value of the typeahead (should match the suggestion objects returned by " [:code ":data-source"] ")."}
-   {:name :debounce-delay    :required false :default 250     :type "integer"          :validate-fn integer?           :description [:span "After receiving input, the typeahead will wait this many milliseconds without receiving new input before calling " [:code ":data-source"] "."]}
-   {:name :render-suggestion :required false                  :type "render fn"        :validate-fn fn?                :description "override the rendering of the suggestion items by passing a fn that returns hiccup forms. The fn will receive two arguments: the search term, and the suggestion object."}
-   {:name :suggestion-to-string :required false               :type "suggestion -> string" :validate-fn fn?            :description "When a suggestion is chosen, the input-text value will be set to the result of calling this fn with the suggestion object."}
-   {:name :rigid?            :required false :default true    :type "boolean | atom"                                   :description [:span "If "[:code "false"]" the user will be allowed to choose arbitrary text input rather than a suggestion from " [:code ":data-source"]". In this case, a string will be supplied in lieu of a suggestion object." ]}))
+   {:name :data-source       :required true                :type "fn"               :validate-fn fn?      :description [:span [:code ":data-source"] " supplies suggestion objects. This can either accept a single string argument (the search term), or a string and a callback. For the first case, the fn should return a collection of suggestion objects (which can be anything). For the second case, the fn should return "[:code "nil" ]", and eventually result in a call to the callback with a collection of suggestion objects."]}
+   {:name :on-change         :required false :default nil  :type "string -> nil"    :validate-fn fn?      :description [:span [:code ":change-on-blur?"] " controls when it is called. It is passed a suggestion object."] }
+   {:name :change-on-blur?   :required false :default true :type "boolean | atom"                         :description [:span "when true, invoke " [:code ":on-change"] " when the use chooses a suggestion, otherwise invoke it on every change (navigating through suggestions with the mouse or keyboard, or if "[:code "rigid?"]" is also "[:code "false" ]", invoke it on every character typed.)"] }
+   {:name :model             :required false :default nil  :type "object | atom"                          :description "The initial value of the typeahead (should match the suggestion objects returned by " [:code ":data-source"] ")."}
+   {:name :debounce-delay    :required false :default 250  :type "integer"          :validate-fn integer? :description [:span "After receiving input, the typeahead will wait this many milliseconds without receiving new input before calling " [:code ":data-source"] "."]}
+   {:name :render-suggestion :required false               :type "render fn"        :validate-fn fn?      :description "override the rendering of the suggestion items by passing a fn that returns hiccup forms. The fn will receive two arguments: the search term, and the suggestion object."}
+   {:name :suggestion-to-string :required false            :type "suggestion -> string" :validate-fn fn?  :description "When a suggestion is chosen, the input-text value will be set to the result of calling this fn with the suggestion object."}
+   {:name :rigid?            :required false :default true :type "boolean | atom"                         :description [:span "If "[:code "false"]" the user will be allowed to choose arbitrary text input rather than a suggestion from " [:code ":data-source"]". In this case, a string will be supplied in lieu of a suggestion object." ]}))
 
 
 ;; TODO
@@ -36,7 +36,7 @@
 (declare debounce display-suggestion)
 (defn- make-typeahead-state
   "Return an initial value for the typeahead state, given `args`."
-  [{:as args :keys [on-change rigid? change-on-blur? data-source suggestion-to-string debounce-delay model]}]
+  [{:keys [on-change rigid? change-on-blur? data-source suggestion-to-string debounce-delay model]}]
   (let [external-model-value (deref-or-value model)]
     (cond-> (let [c-input (chan)]
               {:input-text             ""
@@ -61,17 +61,17 @@
 
 (defn- event-updates-model?
   "Should `event` update the `typeahead` `model`?"
-  [{:as state :keys [change-on-blur? rigid?]} event]
+  [{:keys [change-on-blur? rigid?]} event]
   (let [change-on-blur? (deref-or-value change-on-blur?)
-        rigid?          (deref-or-value rigid?)]
+        rigid? (deref-or-value rigid?)]
     (case event
-      :input-text-blurred   (and change-on-blur? (not rigid?))
+      :input-text-blurred (and change-on-blur? (not rigid?))
       :suggestion-activated (not change-on-blur?)
-      :input-text-changed   (not (or change-on-blur? rigid?)))))
+      :input-text-changed (not (or change-on-blur? rigid?)))))
 
 (defn- event-displays-suggestion?
   "Should `event` cause the `input-text` value to be used to show the active suggestion?"
-  [{:as state :keys [change-on-blur?]} event]
+  [{:keys [change-on-blur?]} event]
   (let [change-on-blur? (deref-or-value change-on-blur?)]
     (case event
       :suggestion-activated (not change-on-blur?)
@@ -107,7 +107,7 @@
   (let [suggestion (nth suggestions index)]
     (cond-> state
       :always (assoc :suggestion-active-index index)
-      (event-updates-model?       state :suggestion-activated) (update-model suggestion)
+      (event-updates-model? state :suggestion-activated) (update-model suggestion)
       (event-displays-suggestion? state :suggestion-activated) (display-suggestion suggestion))))
 
 (defn- choose-suggestion-by-index
@@ -196,33 +196,32 @@
   (go-loop []
     (let [new-text (<! c-search)
           data-source (:data-source @state-atom)]
-      (if (= "" new-text)
-        (swap! state-atom reset-typeahead)
-        (search-data-source! data-source state-atom new-text))
+      (search-data-source! data-source state-atom new-text)
       (recur))))
 
 (defn- input-text-on-change!
   "Update state in response to `input-text` `on-change`, and put text on the `c-input` channel"
   [state-atom new-text]
   (let [{:as state :keys [input-text c-input]} @state-atom]
-    (if (= new-text input-text) state ;; keypresses that do not change the value still call on-change, ignore these
-        (do
-          (when-not (clojure.string/blank? new-text) (put! c-input new-text))
-          (swap! state-atom
-                 #(cond-> %
-                    :always (assoc :input-text new-text :displaying-suggestion? false)
-                    (event-updates-model? state :input-text-changed) (update-model new-text)))))))
+    (if (= new-text input-text)
+      state                                                 ;; keypresses that do not change the value still call on-change, ignore these
+      (do
+        (put! c-input new-text)
+        (swap! state-atom
+               #(cond-> %
+                  :always (assoc :input-text new-text :displaying-suggestion? false)
+                  (event-updates-model? state :input-text-changed) (update-model new-text)))))))
 
 (defn- input-text-on-key-down!
   [state-atom event]
   (condp = (.-which event)
-    goog.events.KeyCodes.UP     (swap! state-atom activate-suggestion-prev)
-    goog.events.KeyCodes.DOWN   (swap! state-atom activate-suggestion-next)
-    goog.events.KeyCodes.ENTER  (swap! state-atom choose-suggestion-active)
-    goog.events.KeyCodes.ESC    (swap! state-atom reset-typeahead)
+    (.-UP KeyCodes) (swap! state-atom activate-suggestion-prev)
+    (.-DOWN KeyCodes) (swap! state-atom activate-suggestion-next)
+    (.-ENTER KeyCodes) (swap! state-atom choose-suggestion-active)
+    (.-ESC KeyCodes) (swap! state-atom reset-typeahead)
     ;; tab requires special treatment
     ;; trap it IFF there are suggestions, otherwise let the input defocus
-    goog.events.KeyCodes.TAB
+    (.-TAB KeyCodes)
     (if (not-empty (:suggestions @state-atom))
       (do (swap! state-atom activate-suggestion-next)
           (.preventDefault event))
@@ -235,9 +234,9 @@
 
 (defn- typeahead
   "typeahead reagent component"
-  [& {:keys [data-source on-change rigid? change-on-blur?] :as args}]
+  [& {:as args}]
   {:pre [(validate-args-macro typeahead-args-desc args "typeahead")]}
-  (let [{:as state :keys [c-search c-input]} (make-typeahead-state args)
+  (let [{:as state :keys [c-search]} (make-typeahead-state args)
         state-atom (reagent/atom state)
         input-text-model (reagent/cursor state-atom [:input-text])]
     (search-data-source-loop! state-atom c-search)
@@ -273,7 +272,7 @@
              :class "rc-typeahead-suggestions-container"
              :children [(when waiting?
                           [box :align :center :child [throbber :size :small :class "rc-typeahead-throbber"]])
-                        (for [[ i s ] (map vector (range) suggestions)
+                        (for [[i s] (map vector (range) suggestions)
                               :let [selected? (= suggestion-active-index i)]]
                           ^{:key i}
                           [box
