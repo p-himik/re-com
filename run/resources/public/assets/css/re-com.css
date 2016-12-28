@@ -973,12 +973,6 @@ html, body {
   color: #13C200;
 }
 
-.alert-warning {
-    color:            #ea6b00;
-    background-color: #ffecdc;
-    border-color:     #faebcc;
-}
-
 code {
     margin-right:   0.2em;
     border-radius:  4px;
