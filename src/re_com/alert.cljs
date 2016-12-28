@@ -34,7 +34,7 @@
                       :on-click (handler-fn (on-close id))
                       :class    "close"]
         alert-class  (alert-type {:none           ""
-                                  :info           "alert-success"
+                                  :info           "alert-info"
                                   :warning        "alert-warning"
                                   :danger         "alert-danger"})]
     [:div
