@@ -688,7 +688,12 @@ html, body {
 .dropdown-button.activator {
     width: 40px;
     color: #777;
-    background-color: #F7F7F7
+    background-color: #F7F7F7;
+    padding: 3px 0px 0px 0px;
+}
+
+.dropdown-button.activator > i.zmdi {
+    font-size: 24px;
 }
 
 /*----------------------------------------------------------------------------------------

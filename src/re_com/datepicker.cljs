@@ -249,8 +249,7 @@
                    (unparse (if (seq format) (formatter format) date-format) (deref-or-value model))
                    "")]
                 [:span.dropdown-button.activator.input-group-addon
-                 {:style {:padding "3px 0px 0px 0px"}}
-                 [:i.zmdi.zmdi-apps {:style {:font-size "24px"}}]]]]])
+                 [:i.zmdi.zmdi-apps]]]]])
 
 (def datepicker-dropdown-args-desc
   (conj datepicker-args-desc
