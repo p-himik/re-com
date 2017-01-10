@@ -1,5 +1,6 @@
 (ns re-com.core
   (:require [re-com.alert          :as alert]
+            [re-com.backdrop       :as backdrop]
             [re-com.box            :as box]
             [re-com.buttons        :as buttons]
             [re-com.datepicker     :as datepicker]
@@ -86,3 +87,5 @@
 (def make-tour                  tour/make-tour)
 (def start-tour                 tour/start-tour)
 (def make-tour-nav              tour/make-tour-nav)
+
+(def backdrop                   backdrop/backdrop)
