@@ -6,7 +6,8 @@
             [re-com.validate :refer [input-status-type? input-status-types-list regex?
                                      string-or-hiccup? css-style? html-attr? number-or-string?
                                      string-or-atom? throbber-size? throbber-sizes-list
-                                     button-size? button-sizes-list position? position-options-list]
+                                     button-size? button-sizes-list position? position-options-list
+                                     box-type?]
                              :refer-macros [validate-args-macro]]
             [reagent.core    :as    reagent]))
 
@@ -265,33 +266,38 @@
    {:name :style       :required false                :type "CSS style map"     :validate-fn css-style?        :description "radio button style map"}
    {:name :label-style :required false                :type "CSS style map"     :validate-fn css-style?        :description "the CSS class applied overall to the component"}
    {:name :label-class :required false                :type "string"            :validate-fn string?           :description "the CSS class applied to the label"}
-   {:name :attr        :required false                :type "HTML attr map"     :validate-fn html-attr?        :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}])
+   {:name :attr        :required false                :type "HTML attr map"     :validate-fn html-attr?        :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}
+   {:name :box-type    :required false :default :horizontal :type "keyword"     :validate-fn box-type?         :description "box to use to wrap label and radio button"}])
 
 (defn radio-button
   "I return the markup for a radio button, with an optional RHS label"
-  [& {:keys [model on-change value label disabled? style label-class label-style attr]
+  [& {:keys [model on-change value label disabled? style label-class label-style attr box-type]
+      :or   {box-type :horizontal}
       :as   args}]
   {:pre [(validate-args-macro radio-button-args-desc args "radio-button")]}
   (let [cursor      "default"
         model       (deref-or-value model)
         disabled?   (deref-or-value disabled?)
         callback-fn #(when (and on-change (not disabled?))
-                      (on-change (not model)))]  ;; call on-change with either true or false
-    [h-box
+                       (on-change (not model)))             ;; call on-change with either true or false
+        input [:input
+               (merge
+                 {:class     "rc-radio-button"
+                  :type      "radio"
+                  :style     (merge
+                               (flex-child-style "none")
+                               {:cursor cursor}
+                               style)
+                  :disabled  disabled?
+                  :checked   (= model value)
+                  :on-change (handler-fn (callback-fn))}
+                 attr)]]
+    [(case box-type
+       :horizontal h-box
+       :vertical v-box)
      :align    :start
      :class    "noselect"
-     :children [[:input
-                 (merge
-                   {:class     "rc-radio-button"
-                    :type      "radio"
-                    :style     (merge
-                                 (flex-child-style "none")
-                                 {:cursor cursor}
-                                 style)
-                    :disabled  disabled?
-                    :checked   (= model value)
-                    :on-change (handler-fn (callback-fn))}
-                   attr)]
+     :children [(when (= box-type :horizontal) input)
                 (when label
                   [:span
                    {:on-click (handler-fn (callback-fn))
@@ -300,7 +306,8 @@
                                      {:padding-left "8px"
                                       :cursor       cursor}
                                      label-style)}
-                   label])]]))
+                   label])
+                (when (= box-type :vertical) input)]]))
 
 
 ;; ------------------------------------------------------------------------------------

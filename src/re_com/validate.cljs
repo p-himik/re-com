@@ -133,6 +133,7 @@
                            :below-left  :below-center :below-right
                            :left-above  :left-center  :left-below
                            :right-above :right-center :right-below])
+(def box-types            [:horizontal :vertical])
 
 (defn validate-arg-against-set
   "Validates the passed argument against the expected set"
@@ -151,6 +152,7 @@
 (defn popover-status-type? [arg] (validate-arg-against-set arg ":status"        popover-status-types))
 (defn title-level-type?    [arg] (validate-arg-against-set arg ":level"         title-levels))
 (defn position?            [arg] (validate-arg-against-set arg ":position"      position-options))
+(defn box-type?            [arg] (validate-arg-against-set arg ":box-type"      box-types))
 
 ;; ----------------------------------------------------------------------------
 ;; Predefined hiccup lists for streamlined consumption in arg documentation
