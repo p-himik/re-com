@@ -279,7 +279,7 @@
         model       (deref-or-value model)
         disabled?   (deref-or-value disabled?)
         callback-fn #(when (and on-change (not disabled?))
-                       (on-change (not model)))             ;; call on-change with either true or false
+                       (on-change value))  ;; call on-change with either true or false
         input [:input
                (merge
                  {:class     "rc-radio-button"
