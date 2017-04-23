@@ -206,6 +206,8 @@
                   :on-paste-capture :on-scroll-capture :on-submit-capture :on-touch-cancel-capture :on-touch-end-capture :on-touch-move-capture
                   :on-touch-start-capture :on-wheel-capture})
 
+(def react-html-attrs #{:ref})
+
 ;; Reference: http://facebook.github.io/react/docs/tags-and-attributes.html#supported-attributes
 
 (def extension-attrs #{:data :aria})
@@ -293,6 +295,7 @@
   "Returns the subset of HTML attributes contained in the passed argument that are not valid HTML attributes."
   [attrs]
   (remove #(or (html-attrs %)
+               (react-html-attrs %)
                (extension-attribute? %))
           attrs))
 
