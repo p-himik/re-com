@@ -19,15 +19,16 @@
    {:name :disabled?        :required false :default false         :type "boolean | atom"                                 :description "if true, the user can't click the button"}
    {:name :class            :required false                        :type "string"          :validate-fn string?           :description "CSS class names, space separated"}
    {:name :style            :required false                        :type "CSS style map"   :validate-fn css-style?        :description "CSS styles"}
-   {:name :attr             :required false                        :type "HTML attr map"   :validate-fn html-attr?        :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}])
+   {:name :attr             :required false                        :type "HTML attr map"   :validate-fn html-attr?        :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}
+   {:name :size             :required false :default "none"        :type "string"          :validate-fn string?           :description "Same as :size of box"}])
 
 (defn button
   "Returns the markup for a basic button"
   []
   (let [showing? (reagent/atom false)]
     (fn
-      [& {:keys [label on-click tooltip tooltip-position disabled? class style attr]
-          :or   {class "btn-default"}
+      [& {:keys [label on-click tooltip tooltip-position disabled? class style attr size]
+          :or   {class "btn-default" size "none"}
           :as   args}]
       {:pre [(validate-args-macro button-args-desc args "button")]}
       (when-not tooltip (reset! showing? false)) ;; To prevent tooltip from still showing after button drag/drop
@@ -36,7 +37,7 @@
                         (merge
                           {:class    (str "rc-button btn " class)
                            :style    (merge
-                                       (flex-child-style "none")
+                                       (flex-child-style size)
                                        style)
                            :disabled disabled?
                            :on-click (handler-fn
@@ -51,6 +52,7 @@
           (reset! showing? false))
         [box
          :class "display-inline-flex"
+         :size size
          :align :start
          :child (if tooltip
                   [popover-tooltip
