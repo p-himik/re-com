@@ -5,7 +5,7 @@
             [re-com.box      :refer [h-box v-box box gap line flex-child-style align-style]]
             [re-com.validate :refer [input-status-type? input-status-types-list regex?
                                      string-or-hiccup? css-style? html-attr? number-or-string?
-                                     string-or-atom? throbber-size? throbber-sizes-list
+                                     string-or-atom? nillable-string-or-atom? throbber-size? throbber-sizes-list
                                      button-size? button-sizes-list position? position-options-list
                                      box-type?]
                              :refer-macros [validate-args-macro]]
@@ -54,7 +54,7 @@
                                        :validating "zmdi-hc-spin zmdi-rotate-right zmdi-spinner"}))
 
 (def input-text-args-desc
-  [{:name :model                   :required true                         :type "string | atom"    :validate-fn string-or-atom?    :description "text of the input (can be atom or value)"}
+  [{:name :model                   :required true                         :type "string | atom"    :validate-fn nillable-string-or-atom?    :description "text of the input (can be atom or value)"}
    {:name :on-change               :required true                         :type "string -> nil"    :validate-fn fn?                :description [:span [:code ":change-on-blur?"] " controls when it is called. Passed the current input string"] }
    {:name :status                  :required false                        :type "keyword"          :validate-fn input-status-type? :description [:span "validation status. " [:code "nil/omitted"] " for normal status or one of: " input-status-types-list]}
    {:name :status-icon?            :required false :default false         :type "boolean"                                          :description [:span "when true, display an icon to match " [:code ":status"] " (no icon for nil)"]}
@@ -64,6 +64,7 @@
    {:name :placeholder             :required false                        :type "string"           :validate-fn string?            :description "background text shown when empty"}
    {:name :width                   :required false :default "250px"       :type "string"           :validate-fn string?            :description "standard CSS width setting for this input"}
    {:name :height                  :required false                        :type "string"           :validate-fn string?            :description "standard CSS height setting for this input"}
+   {:name :size                    :required false :default "none"        :type "string"           :validate-fn string?            :description [:span "equivalent to CSS style " [:span.bold "flex"] "." [:br]  "Examples: " [:code "initial"] ", " [:code "auto"] ", " [:code "none"]", " [:code "100px"] ", " [:code "2"] " or a generic triple of " [:code "grow shrink basis"]]}
    {:name :rows                    :required false :default 3             :type "integer | string" :validate-fn number-or-string?  :description "ONLY applies to 'input-textarea': the number of rows of text to show"}
    {:name :change-on-blur?         :required false :default true          :type "boolean | atom"                                   :description [:span "when true, invoke " [:code ":on-change"] " function on blur, otherwise on every change (character by character)"] }
    {:name :validation-regex        :required false                        :type "regex"            :validate-fn regex?             :description "user input is only accepted if it would result in a string that matches this regular expression"}
@@ -88,8 +89,8 @@
         internal-model (reagent/atom (if (nil? @external-model) "" @external-model))] ;; Create a new atom from the model to be used internally (avoid nil)
     (fn
       [& {:keys [model status status-icon? status-icon-size status-tooltip status-tooltip-position
-                 placeholder width height rows on-change change-on-blur? validation-regex disabled? class style attr]
-          :or   {status-icon-size :regular status-tooltip-position :right-center change-on-blur? true}
+                 placeholder width height size rows on-change change-on-blur? validation-regex disabled? class style attr]
+          :or   {status-icon-size :regular status-tooltip-position :right-center change-on-blur? true size "none"}
           :as   args}]
       {:pre [(validate-args-macro input-text-args-desc args "input-text")]}
       (let [latest-ext-model (deref-or-value model)
@@ -102,6 +103,7 @@
         [h-box
          :align    :center
          :width    (if width width "250px")
+         :size     size
          :class    "rc-input-text "
          :children [[:div
                      {:class (str "rc-input-text-inner "          ;; form-group
