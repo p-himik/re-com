@@ -1328,6 +1328,8 @@ code {
 }
 
 .rc-typeahead-suggestions-container {
+    position: absolute;
+    width: 100%;
     background-color: #eee;
     position: absolute;
     z-index: 1000;
