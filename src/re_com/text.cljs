@@ -12,6 +12,7 @@
 
   (def label-args-desc
     [{:name :label    :required true  :type "anything"                              :description "text or hiccup or whatever to display"}
+     {:name :for      :required false :type "string"        :validate-fn string?    :description "HTML label's 'for' attribute"}
      {:name :on-click :required false :type "-> nil"        :validate-fn fn?        :description "a function which takes no params and returns nothing. Called when the label is clicked"}
      {:name :width    :required false :type "string"        :validate-fn string?    :description "a CSS width"}
      {:name :class    :required false :type "string"        :validate-fn string?    :description "CSS class names, space separated"}
@@ -20,18 +21,19 @@
 
 (defn label
   "Returns markup for a basic label"
-  [& {:keys [label on-click width class style attr]
+  [& {:keys [label on-click width class style attr for]
       :as   args}]
   {:pre [(validate-args-macro label-args-desc args "label")]}
   [box
    :width width
    :align :start
    :class "display-inline-flex"
-   :child [:span
+   :child [(if for :label :span)
            (merge
              {:class (str "rc-label " class)
               :style (merge (flex-child-style "none")
-                            style)}
+                            style)
+              :for for}
              (when on-click
                {:on-click (handler-fn (on-click))})
              attr)
